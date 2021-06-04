@@ -6,6 +6,7 @@ IDE: Eclipse 2020-03
 JDK: AdoptOpenJDK 11.0.9
 Dependency management: Gradle
 
+
 === How to start ===
 Please start up the webapp by running com.contineo.inventory.ContineoInventoryApplication. 
 You may run "/ContineoInventoryApplication.launch" if you are using Eclipse.
@@ -18,6 +19,7 @@ I could have written test harnesses to cover this part but I didn't due to time 
 For unit test, you may run the script at "/Unit test - contineo_interview.launch"
 Not all of the classes are covered with unit test, as I am running out of time. 
 Please check out InventoryControllerTest, which contains the most important unit test.
+
 
 === API === 
 Please start up the application and check out the API. There is also a static version at root folder(/api-docs.yaml).
