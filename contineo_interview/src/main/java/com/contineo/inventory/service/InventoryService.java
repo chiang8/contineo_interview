@@ -23,12 +23,20 @@ public class InventoryService {
 		this.repo = repo;
 	}
 
+	public void clear() {
+		repo.clear();
+	}
+	
 	public Inventory get(UUID id) {
 		return repo.get(id);
 	}
 	
 	public Collection<Inventory> getAll(){
 		return repo.getAll();
+	}
+	
+	public Collection<Inventory> getAll(Collection<UUID> ids){
+		return repo.getAll(ids);
 	}
 	
 	/**

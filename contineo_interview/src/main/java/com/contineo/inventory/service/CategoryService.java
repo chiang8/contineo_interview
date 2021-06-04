@@ -6,10 +6,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.contineo.inventory.model.Category;
@@ -23,14 +23,13 @@ import com.google.common.base.Splitter;
 @Component
 public class CategoryService {
 	private Map<String,Category> map;
+	private String propertiesFilename;
 	
-	public CategoryService() throws IOException {
+	public CategoryService(@Value("${app.category.properties.location}") String propertiesFilename)  throws IOException {
+		this.propertiesFilename = propertiesFilename;
+		
 		map = new ConcurrentHashMap<>();
 		refresh();
-	}
-	
-	public Set<Map.Entry<String,Category>> entrySet(){
-		return map.entrySet();
 	}
 	
 	public Category get(String key) {
@@ -50,7 +49,7 @@ public class CategoryService {
 	private Map<String,Category> loadEntries() throws IOException {
 		//load from a properties file. Could have loaded from database instead...
 		Properties properties = new Properties();
-		try(InputStream in = getClass().getClassLoader().getResourceAsStream("category.properties")){
+		try(InputStream in = getClass().getClassLoader().getResourceAsStream(propertiesFilename)){
 			properties.load(in);
 		}
 		
@@ -59,10 +58,6 @@ public class CategoryService {
 						e -> e.getKey().toString(),
 						e -> new Category(e.getKey().toString(), new HashSet<>(Splitter.on(",").omitEmptyStrings().splitToList(e.getValue().toString())))
 						));
-	}
-
-	public void save(String key, Category category) {
-		map.put(key, category);
 	}
 	
 	public void refresh() throws IOException {		

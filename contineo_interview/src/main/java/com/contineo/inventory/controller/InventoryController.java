@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.contineo.inventory.model.Inventory;
 import com.contineo.inventory.service.InventoryService;
@@ -45,6 +46,7 @@ public class InventoryController {
 	}
 
 	@GetMapping(path = "/{id}")
+	@ResponseBody
 	public ResponseEntity<JsonMessage> get(@PathVariable UUID id){
 		Inventory result = inventoryService.get(id);
 		
@@ -55,31 +57,52 @@ public class InventoryController {
 		}
 	}
 	
-	@GetMapping
+	@GetMapping (path = "/all")
+	@ResponseBody
 	public ResponseEntity<JsonMessage> getAll(){
-		return ResponseEntity.ok(new JsonMessage(inventoryService.getAll()));
+		Collection<Inventory> result = inventoryService.getAll();
+		
+		if (CollectionUtils.isEmpty(result)) {
+			return ResponseEntity.notFound().build();
+		}else {
+			return ResponseEntity.ok(new JsonMessage(result));
+		}
+	}
+	
+	@GetMapping(params = {"ids"})
+	@ResponseBody
+	public ResponseEntity<JsonMessage> getAllByIds(@RequestParam List<UUID> ids){
+		Collection<Inventory> result = inventoryService.getAll(ids);
+		
+		if (CollectionUtils.isEmpty(result)) {
+			return ResponseEntity.notFound().build();
+		}else {
+			return ResponseEntity.ok(new JsonMessage(result));
+		}
 	}
 	
 	@DeleteMapping(path = "/{id}")
+	@ResponseBody
 	public ResponseEntity<JsonMessage> remove(@PathVariable UUID id){
 		Inventory result = inventoryService.remove(id);
 		
 		if (result==null) {
 			return ResponseEntity.notFound().build();
 		}else {
-			logger.debug(()-> String.format("Removed Inventory. (%s)", result));
+			logger.info(()-> String.format("Removed Inventory. (%s)", result));
 			return ResponseEntity.ok(new JsonMessage(result));
 		}
 	}
 	
 	@DeleteMapping(params = {"ids"})
+	@ResponseBody
 	public ResponseEntity<JsonMessage> removeAll(@RequestParam List<UUID> ids){
 		Collection<Inventory> result = inventoryService.removeAll(ids);
 		
 		if (CollectionUtils.isEmpty(result)) {
 			return ResponseEntity.notFound().build();
 		}else {
-			logger.debug(()-> String.format("Removed %s Inventories. (%s)",
+			logger.info(()-> String.format("Removed %s Inventories. (%s)",
 					result.size(),
 					Joiner.on(", ").join(result.stream().map(Inventory::getId).iterator())));
 			return ResponseEntity.ok(new JsonMessage(result));
@@ -87,24 +110,26 @@ public class InventoryController {
 	}
 	
 	@PatchMapping(path = "/{id}", params = {"quantity"})
+	@ResponseBody
 	public ResponseEntity<JsonMessage> updateQuantity(@PathVariable UUID id, @RequestParam int quantity){
 		Inventory result = inventoryService.updateQuantity(id, quantity);
 		
 		if (result==null) {
 			return ResponseEntity.notFound().build();
 		}else {
-			logger.debug(() -> String.format("Updated quantity of inventory(%s) to %s.", id, quantity));
+			logger.info(() -> String.format("Updated quantity of inventory(%s) to %s.", id, quantity));
 			return ResponseEntity.ok(new JsonMessage(result));
 		}
 	}
 	
 	@PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE})
+	@ResponseBody
 	public ResponseEntity<JsonMessage> saveAll(@RequestBody @Valid Collection<Inventory> inventories){
 		if (CollectionUtils.isEmpty(inventories)) {
 			return ResponseEntity.badRequest().build();
 		}else {
 			Collection<Inventory> result = inventoryService.saveAll(inventories);
-			logger.debug(() -> String.format("Saved %s inventories. (%s)", result.size(), result));
+			logger.info(() -> String.format("Saved %s inventories. (%s)", result.size(), result));
 			
 			return ResponseEntity.ok(new JsonMessage(inventories));
 		}

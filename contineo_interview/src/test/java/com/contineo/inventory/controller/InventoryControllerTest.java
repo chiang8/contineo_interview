@@ -1,5 +1,7 @@
 package com.contineo.inventory.controller;
 
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -77,7 +79,7 @@ public class InventoryControllerTest {
 
 	@Test
 	public void testGetAll()throws Exception{
-		mvc.perform(MockMvcRequestBuilders.get("/inventories"))
+		mvc.perform(MockMvcRequestBuilders.get("/inventories/all"))
 			.andDo(MockMvcResultHandlers.log())
 			.andExpect(MockMvcResultMatchers.status().is(200))
 			.andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -87,6 +89,21 @@ public class InventoryControllerTest {
 			.andExpect(MockMvcResultMatchers.jsonPath("$.data.[?(@.name == \"ipad_pro\")].category").value(computerInventory_2.getCategory()))
 			.andExpect(MockMvcResultMatchers.jsonPath("$.data.[?(@.name == \"ipad_pro\")].subCategory").value(computerInventory_2.getSubCategory()))
 			.andExpect(MockMvcResultMatchers.jsonPath("$.data.[?(@.name == \"ipad_pro\")].quantity").value(computerInventory_2.getQuantity()));
+	}
+	
+	@Test
+	public void testGetAll_byIds()throws Exception{			
+		//get entries
+		mvc.perform(MockMvcRequestBuilders.get("/inventories?ids=" + StringUtils.join(Arrays.asList(computerInventory_1.getId(), computerInventory_2.getId()), ",")))
+			.andDo(MockMvcResultHandlers.log())
+			.andExpect(MockMvcResultMatchers.status().is(200))
+			.andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+			.andExpect(MockMvcResultMatchers.jsonPath("$.data.[?(@.name == \"dell_laptop\")].category").value(computerInventory_1.getCategory()))
+			.andExpect(MockMvcResultMatchers.jsonPath("$.data.[?(@.name == \"dell_laptop\")].subCategory").value(computerInventory_1.getSubCategory()))
+			.andExpect(MockMvcResultMatchers.jsonPath("$.data.[?(@.name == \"dell_laptop\")].quantity").value(computerInventory_1.getQuantity()))
+			.andExpect(MockMvcResultMatchers.jsonPath("$.data.[?(@.name == \"ipad_pro\")].category").value(computerInventory_2.getCategory()))
+			.andExpect(MockMvcResultMatchers.jsonPath("$.data.[?(@.name == \"ipad_pro\")].subCategory").value(computerInventory_2.getSubCategory()))
+			.andExpect(MockMvcResultMatchers.jsonPath("$.data.[?(@.name == \"ipad_pro\")].quantity").value(computerInventory_2.getQuantity()));		
 	}
 
 	@Test
@@ -105,10 +122,7 @@ public class InventoryControllerTest {
 		inventoryService.save(newInventory_2);
 			
 		//remove entries
-		mvc.perform(MockMvcRequestBuilders.delete("/inventories?ids=" + StringUtils.join(Arrays.asList(newInventory_1.getId(), newInventory_2.getId()), ","))
-				.content(objectMapper.writeValueAsBytes(Arrays.asList(newInventory_1)))
-				.contentType(MediaType.APPLICATION_JSON)
-				)
+		mvc.perform(MockMvcRequestBuilders.delete("/inventories?ids=" + StringUtils.join(Arrays.asList(newInventory_1.getId(), newInventory_2.getId()), ",")))
 			.andDo(MockMvcResultHandlers.log())
 			.andExpect(MockMvcResultMatchers.status().is(200))
 			.andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -118,6 +132,18 @@ public class InventoryControllerTest {
 			.andExpect(MockMvcResultMatchers.jsonPath("$.data.[?(@.name == \"dress\")].category").value(newInventory_2.getCategory()))
 			.andExpect(MockMvcResultMatchers.jsonPath("$.data.[?(@.name == \"dress\")].subCategory").value(newInventory_2.getSubCategory()))
 			.andExpect(MockMvcResultMatchers.jsonPath("$.data.[?(@.name == \"dress\")].quantity").value(newInventory_2.getQuantity()));
+		
+		//assert
+		assertNull(inventoryService.get(newInventory_1.getId()));
+		assertNull(inventoryService.get(newInventory_2.getId()));
+	}
+	
+	@Test
+	public void testRemoveInventories_notFound()throws Exception{
+		//remove entries
+		mvc.perform(MockMvcRequestBuilders.delete("/inventories?ids=" + StringUtils.join(Arrays.asList(UUID.randomUUID(), UUID.randomUUID()), ",")))	//two random UUID
+			.andDo(MockMvcResultHandlers.log())
+			.andExpect(MockMvcResultMatchers.status().is(404));
 	}
 	
 	@Test
@@ -190,23 +216,7 @@ public class InventoryControllerTest {
 	}
 	
 	@Test
-	public void testSaveInventories_invalid_subCatetory()throws Exception{
-		Inventory newInventory_1 = new Inventory(null, "addidas_basketball_shoe", "fashion", "tablet", 100);
-		Inventory newInventory_2 = new Inventory(null, "shorts", "fashion", "laptop", 200);
-		
-		mvc.perform(MockMvcRequestBuilders.post("/inventories")
-				.content(objectMapper.writeValueAsBytes(Arrays.asList(newInventory_1, newInventory_2)))
-				.contentType(MediaType.APPLICATION_JSON)
-				)
-			.andDo(MockMvcResultHandlers.log())
-			.andExpect(MockMvcResultMatchers.status().is(HttpStatus.BAD_REQUEST.value()))
-			.andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-			.andExpect(MockMvcResultMatchers.jsonPath("$.success").value(false))
-			.andExpect(MockMvcResultMatchers.jsonPath("$.messages").value(Matchers.notNullValue()));
-	}
-
-	@Test
-	public void testUpdateInventories()throws Exception{
+	public void testSaveInventories_existingEntries()throws Exception{
 		//save a new entry
 		Inventory newInventory_1 = new Inventory(UUID.randomUUID(), "t-shirt", "fashion", "clothing", 200);
 		inventoryService.save(newInventory_1);
@@ -230,6 +240,22 @@ public class InventoryControllerTest {
 	}
 
 	@Test
+	public void testSaveInventories_invalid_subCatetory()throws Exception{
+		Inventory newInventory_1 = new Inventory(null, "addidas_basketball_shoe", "fashion", "tablet", 100);
+		Inventory newInventory_2 = new Inventory(null, "shorts", "fashion", "laptop", 200);
+		
+		mvc.perform(MockMvcRequestBuilders.post("/inventories")
+				.content(objectMapper.writeValueAsBytes(Arrays.asList(newInventory_1, newInventory_2)))
+				.contentType(MediaType.APPLICATION_JSON)
+				)
+			.andDo(MockMvcResultHandlers.log())
+			.andExpect(MockMvcResultMatchers.status().is(400))
+			.andExpect(MockMvcResultMatchers.content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+			.andExpect(MockMvcResultMatchers.jsonPath("$.success").value(false))
+			.andExpect(MockMvcResultMatchers.jsonPath("$.messages").value(Matchers.notNullValue()));
+	}
+
+	@Test
 	public void testUpdateQuantity()throws Exception{
 		//save a new entry 
 		Inventory newInventory_1 = new Inventory(null, "cap", "fashion", "clothing", 200);
@@ -249,5 +275,17 @@ public class InventoryControllerTest {
 			.andExpect(MockMvcResultMatchers.jsonPath("$.data.category").value(newInventory_1.getCategory()))
 			.andExpect(MockMvcResultMatchers.jsonPath("$.data.subCategory").value(newInventory_1.getSubCategory()))
 			.andExpect(MockMvcResultMatchers.jsonPath("$.data.quantity").value(newQuantity));
+	}
+	
+	@Test
+	public void testUpdateQuantity_notFound()throws Exception{		
+		//update quantity
+		int newQuantity = 300;
+		mvc.perform(MockMvcRequestBuilders.patch("/inventories/" + UUID.randomUUID())	//random UUID
+				.param("quantity", Integer.toString(newQuantity))
+				.contentType(MediaType.APPLICATION_JSON)
+				)
+			.andDo(MockMvcResultHandlers.log())
+			.andExpect(MockMvcResultMatchers.status().is(404));
 	}
 }

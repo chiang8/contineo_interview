@@ -25,12 +25,29 @@ public class InventoryRepository {
 		map = new ConcurrentHashMap<>();
 	}
 	
+	public void clear() {
+		map.clear();
+	}
+	
 	public Inventory get(UUID id) {
 		return map.get(id);
 	}
 	
 	public Collection<Inventory> getAll(){
 		return map.values();
+	}
+	
+	public Collection<Inventory> getAll(Collection<UUID> ids){
+		List<Inventory> rtnVal = new ArrayList<>();
+		
+		for(UUID id:ids) {
+			Inventory value = map.get(id);
+			if (value!=null) {
+				rtnVal.add(value);
+			}
+		}
+		
+		return rtnVal;
 	}
 	
 	public Inventory remove(UUID id) {

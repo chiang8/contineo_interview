@@ -1,0 +1,184 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+- url: http://localhost:8081/contineo_inventory
+  description: Generated server url
+paths:
+  /inventories:
+    get:
+      tags:
+      - inventory-controller
+      operationId: getAllByIds
+      parameters:
+      - name: ids
+        in: query
+        required: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/JsonMessage'
+    post:
+      tags:
+      - inventory-controller
+      operationId: saveAll
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Inventory'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/JsonMessage'
+    delete:
+      tags:
+      - inventory-controller
+      operationId: removeAll
+      parameters:
+      - name: ids
+        in: query
+        required: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/JsonMessage'
+  /inventories/{id}:
+    get:
+      tags:
+      - inventory-controller
+      operationId: get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/JsonMessage'
+    delete:
+      tags:
+      - inventory-controller
+      operationId: remove
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/JsonMessage'
+    patch:
+      tags:
+      - inventory-controller
+      operationId: updateQuantity
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: quantity
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/JsonMessage'
+  /inventories/all:
+    get:
+      tags:
+      - inventory-controller
+      operationId: getAll
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/JsonMessage'
+  /categories/all:
+    get:
+      tags:
+      - category-controller
+      operationId: getAll_1
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/JsonMessage'
+components:
+  schemas:
+    Inventory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+        subCategory:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        lastUpdatedDate:
+          type: string
+          format: date-time
+    JsonMessage:
+      type: object
+      properties:
+        data:
+          type: object
+        messages:
+          type: array
+          items:
+            type: string
+        success:
+          type: boolean
