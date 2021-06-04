@@ -1,0 +1,3 @@
+This is a simple web application for managing Contineo. It is built upon Springboot + Spring MVC. For simplicity sake, there is NO proper datastore like database. It is just backed by a Map.
+
+There is no front-end for this app. For the list of functions it supports, please check out...
